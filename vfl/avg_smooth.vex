@@ -1,0 +1,78 @@
+;_name	avg_smooth
+; ModuleID = 'avg_smooth'
+
+@P = external global <3 x double>
+@Pw = external global double
+@v = external global <3 x double>
+@accel = external global <3 x double>
+@age = external global double
+@life = external global double
+@pstate = external global i32
+@id = external global i32
+@ptnum = external global i32
+@Cd = external global <3 x double>
+@N = external global <3 x double>
+@Npt = external global i32
+@Time = external global double
+@Frame = external global double
+@TimeInc = external global double
+@0 = private constant [2 x i8] c"P\00"
+
+define void @avg_smooth() nounwind {
+entry:
+  %ptnum = load i32* @ptnum
+  %return = call i32* @"neighbours@[III"(i32 0, i32 %ptnum)
+  %cast = call <3 x double> @"set@VI"(i32 0)
+  %return2 = call i32 @"len@I[I"(i32* %return)
+  br label %cond
+
+cond:                                             ; preds = %body, %entry
+  %__impl_foreach_index.0 = phi i32 [ 0, %entry ], [ %output14, %body ]
+  %avg.0 = phi <3 x double> [ %cast, %entry ], [ %output, %body ]
+  %return5 = call i32 @"lt@III"(i32 %__impl_foreach_index.0, i32 %return2)
+  %0 = icmp ne i32 %return5, 0
+  br i1 %0, label %body, label %end
+
+body:                                             ; preds = %cond
+  %return8 = call i32 @"getcomp@I[II"(i32* %return, i32 %__impl_foreach_index.0)
+  %return10 = call <3 x double> @"point@VISI"(i32 0, i8* getelementptr inbounds ([2 x i8]* @0, i32 0, i32 0), i32 %return8)
+  %output = call <3 x double> @"add@VV"(<3 x double> %avg.0, <3 x double> %return10)
+  %output14 = add i32 %__impl_foreach_index.0, 1
+  br label %cond
+
+end:                                              ; preds = %cond
+  %cast18 = call <3 x double> @"set@VI"(i32 %return2)
+  %output19 = call <3 x double> @"div@VV"(<3 x double> %avg.0, <3 x double> %cast18)
+  store <3 x double> %output19, <3 x double>* @P
+  ret void
+}
+
+declare i32* @"neighbours@[III"(i32, i32) nounwind
+
+declare <3 x double> @"set@VI"(i32) nounwind readnone
+
+declare i32 @"len@I[I"(i32*) nounwind readnone
+
+declare i32 @"lt@III"(i32, i32) nounwind readnone
+
+declare i32 @"getcomp@I[II"(i32*, i32) nounwind readnone
+
+declare <3 x double> @"point@VISI"(i32, i8*, i32) nounwind
+
+declare <3 x double> @"add@VV"(<3 x double>, <3 x double>) nounwind readnone
+
+declare <3 x double> @"div@VV"(<3 x double>, <3 x double>) nounwind readnone
+
+define void @__shader_default_arguments() {
+entry:
+  call void @avg_smooth()
+  ret void
+}
+
+!context = !{!0}
+!version = !{!1}
+
+!0 = metadata !{metadata !"sop"}
+!1 = metadata !{metadata !"16.0.671"}
+
+;_code_end

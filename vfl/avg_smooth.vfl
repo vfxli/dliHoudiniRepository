@@ -1,0 +1,15 @@
+sop
+avg_smooth()
+{
+	int npts[];
+	npts = neighbours(0, ptnum);
+
+	vector avg = 0;
+	foreach (int npt; npts)
+	{
+	        vector npos = point(0, 'P', npt);
+	        avg += npos;
+	}
+	avg /= len(npts);
+	P = avg;
+}
