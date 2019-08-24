@@ -6,10 +6,6 @@
  a single file. -->
 
   <toolshelf name="hdtk" label="HDTK">
-    <memberTool name="auto_path0"/>
-    <memberTool name="set_ifd_path"/>
-    <memberTool name="auto_path_up_version"/>
-    <memberTool name="auto_path_down_version"/>
     <memberTool name="fit_cam"/>
     <memberTool name="buildropnet"/>
     <memberTool name="createnull"/>
@@ -23,18 +19,11 @@
     <memberTool name="create_out"/>
     <memberTool name="setupCache"/>
     <memberTool name="colorize"/>
-    <memberTool name="parallelCache"/>
-    <memberTool name="create_matrix0"/>
     <memberTool name="jigsaw_camera"/>
     <memberTool name="visual_angle"/>
     <memberTool name="file_to_abs"/>
     <memberTool name="import_all_abc"/>
   </toolshelf>
-
-  <tool name="set_ifd_path" label="Set IFD Path" icon="ROP_mantra">
-    <script scriptType="python"><![CDATA[from toolbar import set_ifd_path
-set_ifd_path.main()]]></script>
-  </tool>
 
   <tool name="fit_cam" label="Fit Cam" icon="OBJ_camera">
     <script scriptType="python"><![CDATA[from toolbar import fit_cam
@@ -81,240 +70,9 @@ fbxabccopy.main()]]></script>
 create_out.main()]]></script>
   </tool>
 
-  <tool name="auto_path0" label="Auto_Path" icon="SOP_name">
-    <script scriptType="python"><![CDATA[from toolbar import auto_path
-auto_path.main()]]></script>
-  </tool>
-
-  <tool name="create_matrix0" label="Create Matrix" icon="VOP_floattohmatx">
-    <script scriptType="python"><![CDATA[
-import sys
-import toolutils
-
-outputitem = None
-inputindex = -1
-inputitem = None
-outputindex = -1
-
-lastsel = hou.selectedNodes()[0]
-lastpos = lastsel.position()
-
-num_args = 1
-h_extra_args = ''
-pane = toolutils.activePane(kwargs)
-if not isinstance(pane, hou.NetworkEditor):
-    pane = hou.ui.paneTabOfType(hou.paneTabType.NetworkEditor)
-    if pane is None:
-       hou.ui.displayMessage(
-               'Cannot create node: cannot find any network pane')
-       sys.exit(0)
-else: # We're creating this tool from the TAB menu inside a network editor
-    pane_node = pane.pwd()
-    if kwargs.has_key("outputnodename") and kwargs.has_key("inputindex"):
-        outputitem = pane_node.item(kwargs["outputnodename"])
-        inputindex = kwargs["inputindex"]
-        h_extra_args += 'set arg4 = "' + kwargs["outputnodename"] + '"\n'
-        h_extra_args += 'set arg5 = "' + str(inputindex) + '"\n'
-        num_args = 6
-    if kwargs.has_key("inputnodename") and kwargs.has_key("outputindex"):
-        inputitem = pane_node.item(kwargs["inputnodename"])
-        outputindex = kwargs["outputindex"]
-        h_extra_args += 'set arg6 = "' + kwargs["inputnodename"] + '"\n'
-        h_extra_args += 'set arg9 = "' + str(outputindex) + '"\n'
-        num_args = 9 
-    if kwargs.has_key("autoplace"):
-        autoplace = kwargs["autoplace"]
-    else:
-        autoplace = False
-    # If shift-clicked we want to auto append to the current
-    # node
-    if kwargs.has_key("shiftclick") and kwargs["shiftclick"]:
-        if inputitem is None:
-            inputitem = pane.currentNode()
-            outputindex = 0
-    if kwargs.has_key("nodepositionx") and             kwargs.has_key("nodepositiony"):
-        try:
-            pos = [ float( kwargs["nodepositionx"] ),
-                    float( kwargs["nodepositiony"] )]
-        except:
-            pos = None
-    else:
-        pos = None
-
-    if not autoplace and not pane.listMode():
-        if pos is not None:
-            pass
-        elif outputitem is None:
-            pos = pane.selectPosition(inputitem, outputindex, None, -1)
-        else:
-            pos = pane.selectPosition(inputitem, outputindex,
-                                      outputitem, inputindex)
-
-    if pos is not None:
-        if kwargs.has_key("node_bbox"):
-            size = kwargs["node_bbox"]
-            pos[0] -= size[0] / 2
-            pos[1] -= size[1] / 2
-        else:
-            pos[0] -= 0.573625
-            pos[1] -= 0.220625
-        h_extra_args += 'set arg2 = "' + str(pos[0]) + '"\n'
-        h_extra_args += 'set arg3 = "' + str(pos[1]) + '"\n'
-h_extra_args += 'set argc = "' + str(num_args) + '"\n'
-            
-pane_node = pane.pwd()
-child_type = pane_node.childTypeCategory().nodeTypes()
-
-if not child_type.has_key('null'):
-   hou.ui.displayMessage(
-           'Cannot create node: incompatible pane network type')
-   sys.exit(0)
-
-# First clear the node selection
-pane_node.setSelected(False, True)
-
-h_path = pane_node.path()
-h_preamble = 'set arg1 = "' + h_path + '"\n'
-h_cmd = r''' 
-if ($argc < 2 || "$arg2" == "") then
-   set arg2 = 0
-endif
-if ($argc < 3 || "$arg3" == "") then
-   set arg3 = 0
-endif
-# Automatically generated script
-# $arg1 - the path to add this node
-# $arg2 - x position of the tile
-# $arg3 - y position of the tile
-# $arg4 - input node to wire to
-# $arg5 - which input to wire to
-# $arg6 - output node to wire to
-# $arg7 - the type of this node
-# $arg8 - the node is an indirect input
-# $arg9 - index of output from $arg6
-
-\set noalias = 1
-set saved_path = `execute("oppwf")`
-opcf $arg1
-
-# Node $_obj_set_create_matrix (Sop/attribwrangle)
-set _obj_set_create_matrix = `run("opadd -e -n -v attribwrangle create_matrix")`
-oplocate -x `$arg2 + 0` -y `$arg3 + 0` $_obj_set_create_matrix
-opspareds '    group {  name    "folder1"       label   "Code"          parm {      name        "group"             baseparm        label       "Group"             export      none        bindselector points "Modify Points"                 "Select the points to affect and press Enter to complete."              0 1 0xffffffff 0 grouptype 0    }       parm {      name        "grouptype"         baseparm        label       "Group Type"        export      none    }       parm {      name        "class"             baseparm        label       "Run Over"          export      none    }       parm {      name        "vex_numcount"      baseparm        label       "Number Count"      export      none    }       parm {      name        "vex_threadjobsize"         baseparm        label       "Thread Job Size"           export      none    }       parm {      name        "snippet"           baseparm        label       "VEXpression"       export      all     }       parm {      name        "exportlist"        baseparm        label       "Attributes to Create"      export      none    }       parm {      name        "vex_strict"        baseparm        label       "Enforce Prototypes"        export      none    }     }      group {    name    "folder1_1"     label   "Bindings"      parm {      name        "autobind"          baseparm        label       "Autobind by Name"          export      none    }       multiparm {         name        "bindings"          label       "Number of Bindings"        baseparm        default     0           parmtag     { "autoscope" "0000000000000000" }          parmtag     { "multistartoffset" "1" }          parm {              name    "bindname#"             baseparm                label   "Attribute Name"                export  none        }       parm {              name    "bindparm#"             baseparm                label   "VEX Parameter"                 export  none        }   }       parm {      name        "groupautobind"             baseparm        label       "Autobind Groups by Name"           export      none    }       multiparm {         name        "groupbindings"             label       "Group Bindings"            baseparm        default     0           parmtag     { "autoscope" "0000000000000000" }          parmtag     { "multistartoffset" "1" }          parm {              name    "bindgroupname#"                baseparm                label   "Group Name"            export  none        }       parm {              name    "bindgroupparm#"                baseparm                label   "VEX Parameter"                 export  none        }   }       parm {      name        "vex_cwdpath"       baseparm        label       "Evaluation Node Path"      export      none    }       parm {      name        "vex_outputmask"            baseparm        label       "Export Parameters"         export      none    }       parm {      name        "vex_updatenmls"            baseparm        label       "Update Normals If Displaced"       export      none    }       parm {      name        "vex_matchattrib"           baseparm        label       "Attribute to Match"        export      none    }       parm {      name        "vex_inplace"       baseparm        label       "Compute Results In Place"          export      none    }       parm {      name        "vex_selectiongroup"        baseparm        label       "Output Selection Group"            export      none    }     }      parm {     name    "points"        label   "Points"        type    string  default { "" }     } ' $_obj_set_create_matrix
-opparm $_obj_set_create_matrix  bindings ( 0 ) groupbindings ( 0 )
-opparm $_obj_set_create_matrix class ( detail ) snippet ( 'string ptn = chs("points");\nstring aa[] = split(ptn);\nvector cp,n1,n2,n3;\nif(len(aa)==4)\n{\n    int pt1,pt2,pt3,pt4;vector pos1,pos2,pos3,pos4;\n    pt1 = atoi(aa[0]);\n    pt2 = atoi(aa[1]);\n    pt3 = atoi(aa[2]);\n    pt4 = atoi(aa[3]);\n    pos1 = point(0,"P",pt1);pos2 = point(0,"P",pt2);\n    pos3 = point(0,"P",pt3);pos4 = point(0,"P",pt4);\n    \n    vector centpos1 = (pos1+pos2)/2.0;\n    vector centpos2 = (pos3+pos4)/2.0;\n    \n    cp = centpos1;\n    n1 = normalize(pos1-centpos1);\n    n3 = normalize(centpos2-centpos1);\n    n2 = normalize(cross(n1,n3));\n}\nelse if(len(aa)==3)\n{\n    int pt1,pt2,pt3;vector pos1,pos2,pos3;\n    pt1 = atoi(aa[0]);pt2 = atoi(aa[1]);pt3 = atoi(aa[2]);\n    pos1 = point(0,"P",pt1);\n    pos2 = point(0,"P",pt2);\n    pos3 = point(0,"P",pt3);\n    cp = pos2;\n    n1 = normalize(pos1-pos2);\n    n3 = normalize(pos3-pos2);\n    n2 = normalize(cross(n1,n3));\n}\nmatrix m4 = set(n1.x,n1.y,n1.z,0,\n                n2.x,n2.y,n2.z,0,\n                n3.x,n3.y,n3.z,0,\n                cp.x,cp.y,cp.z,1);\nmatrix3 m3 = set(n1.x,n1.y,n1.z,\n                 n2.x,n2.y,n2.z,\n                 n3.x,n3.y,n3.z);\nf[]@myTransform = set(m4);\nf[]@myRotate = set(m3);\n' ) points ( '`chs("../change/points")`' )
-chlock $_obj_set_create_matrix +snippet
-opset -d off -r off -h off -f off -y off -t off -l off -s off -u off -F on -c on -e on -b off $_obj_set_create_matrix
-opexprlanguage -s hscript $_obj_set_create_matrix
-opuserdata -n '___Version___' -v '' $_obj_set_create_matrix
-opuserdata -n '___toolcount___' -v '2' $_obj_set_create_matrix
-opuserdata -n '___toolid___' -v 'create_matrix' $_obj_set_create_matrix
-opset -p on $_obj_set_create_matrix
-opcf $arg1
-
-# Node $_obj_set_change (Sop/python)
-set _obj_set_change = `run("opadd -e -n -v python change")`
-oplocate -x `$arg2 + 0.0029999965336173773` -y `$arg3 + -0.95887992664833999` $_obj_set_change
-opspareds '    parm {   name    "python"        baseparm        label   "Python Code"   export  none     }     parm {   name    "lock"  label   "Lock Current"  type    toggle  default { "0" }     }     parm {        name    "points"        label   "Points"        type    string  default { "" }     } ' $_obj_set_change
-opparm -V 16.0.504.20 $_obj_set_change python ( 'import hou,random\nnode = hou.pwd()\ninput_node = node.inputs()[0]\ndef Main():\n    parm = node.parm(\'points\')\n    str = parm.evalAsString()\n    if str!=\'\':\n        nums = str.split(\' \')\n        n = len(nums)\n        nlst = []\n        ran = random.randrange(n)\n        nlst.append(ran)\n        while len(nlst)<n:\n            ran1 = random.randrange(n)\n            if ran1 not in nlst:\n                nlst.append(ran1)\n        new_str = \'\'\n        for i in nlst:\n            new_str += nums[i] + " "\n        new_str = new_str[:-1]\n        parm.set(new_str)\nlock = node.parm(\'lock\').eval()\nif lock == 0:\n    output_node = node.outputs()[0]\n    output_node.setDisplayFlag(1)\n    Main()  ' ) points ( '41 37 52 49' )
-chlock $_obj_set_change +python
-opcolor -c 1 0 0 $_obj_set_change
-opset -d off -r off -h off -f off -y off -t off -l off -s off -u off -F off -c on -e on -b off $_obj_set_change
-opexprlanguage -s hscript $_obj_set_change
-opuserdata -n '___toolcount___' -v '8' $_obj_set_change
-opuserdata -n '___toolid___' -v 'create_matrix' $_obj_set_change
-opuserdata -n 'nodeshape' -v 'burst' $_obj_set_change
-opset -p on $_obj_set_change
-opcf $arg1
-
-# Node $_obj_set_go_world_center (Sop/attribwrangle)
-set _obj_set_go_world_center = `run("opadd -e -n -v attribwrangle go_world_center")`
-oplocate -x `$arg2 + -4.4408920985006262e-16` -y `$arg3 + -2.0246803443329` $_obj_set_go_world_center
-opparm $_obj_set_go_world_center  bindings ( 0 ) groupbindings ( 0 )
-opparm $_obj_set_go_world_center snippet ( 'float m4[] = detail(0,"myTransform");\nfloat m3[] = detail(0,"myRotate");\nmatrix mt4 = set(m4);\nmatrix3 mt3 = set(m3);\n\n@P *= invert( mt4 );\nv@N *= invert( mt3);\nv@v *= invert( mt3 );\n' )
-chlock $_obj_set_go_world_center +snippet
-opset -d on -r off -h off -f off -y off -t off -l off -s off -u off -F on -c on -e on -b off $_obj_set_go_world_center
-opexprlanguage -s hscript $_obj_set_go_world_center
-opuserdata -n '___Version___' -v '' $_obj_set_go_world_center
-opuserdata -n '___toolcount___' -v '2' $_obj_set_go_world_center
-opuserdata -n '___toolid___' -v 'create_matrix' $_obj_set_go_world_center
-opset -p on $_obj_set_go_world_center
-opcf $arg1
-
-# Node $_obj_set_go_back (Sop/attribwrangle)
-set _obj_set_go_back = `run("opadd -e -n -v attribwrangle go_back")`
-oplocate -x `$arg2 + -4.4408920985006262e-16` -y `$arg3 + -5.0064984793168001` $_obj_set_go_back
-opparm $_obj_set_go_back  bindings ( 0 ) groupbindings ( 0 )
-opparm $_obj_set_go_back snippet ( 'float m4[] = detail(0,"myTransform");\nfloat m3[] = detail(0,"myRotate");\nmatrix mt4 = set(m4);\nmatrix3 mt3 = set(m3);\n\n@P *=  mt4 ;\nv@N *=  mt3 ;\nv@v *= mt3 ;\n' )
-opset -d off -r on -h off -f off -y off -t off -l off -s off -u off -F on -c on -e on -b off $_obj_set_go_back
-opexprlanguage -s hscript $_obj_set_go_back
-opuserdata -n '___Version___' -v '' $_obj_set_go_back
-opuserdata -n '___toolcount___' -v '2' $_obj_set_go_back
-opuserdata -n '___toolid___' -v 'create_matrix' $_obj_set_go_back
-opset -p on $_obj_set_go_back
-opcf $arg1
-
-# Node $_obj_set_do_somthing (Sop/null)
-set _obj_set_do_somthing = `run("opadd -e -n -v null do_somthing")`
-oplocate -x `$arg2 + 0.0029999965336169332` -y `$arg3 + -3.2684755356247006` $_obj_set_do_somthing
-opset -d off -r off -h off -f off -y off -t off -l off -s off -u off -F on -c on -e on -b off $_obj_set_do_somthing
-opexprlanguage -s hscript $_obj_set_do_somthing
-opuserdata -n '___toolcount___' -v '28' $_obj_set_do_somthing
-opuserdata -n '___toolid___' -v 'create matrix' $_obj_set_do_somthing
-opset -p on $_obj_set_do_somthing
-
-opcf $arg1
-opwire -n $_obj_set_trail1 -0 $_obj_set_create_matrix
-opcf $arg1
-opwire -n $_obj_set_create_matrix -0 $_obj_set_change
-opcf $arg1
-opwire -n $_obj_set_change -0 $_obj_set_go_world_center
-opcf $arg1
-opwire -n $_obj_set_do_somthing -0 $_obj_set_go_back
-opcf $arg1
-opwire -n $_obj_set_go_world_center -0 $_obj_set_do_somthing
-
-set oidx = 0
-if ($argc >= 9 && "$arg9" != "") then
-    set oidx = $arg9
-endif
-
-if ($argc >= 5 && "$arg4" != "") then
-    set output = $_obj_set_do_somthing
-    opwire -n $output -$arg5 $arg4
-endif
-if ($argc >= 6 && "$arg6" != "") then
-    set input = $_obj_set_create_matrix
-    if ($arg8) then
-        opwire -n -i $arg6 -0 $input
-    else
-        opwire -n -o $oidx $arg6 -0 $input
-    endif
-endif
-opcf $saved_path
-'''
-hou.hscript(h_preamble + h_extra_args + h_cmd)
-sel = hou.selectedNodes()
-sel[0].setInput(0,lastsel)
-move = lastpos - sel[0].position()
-move = [move[0],move[1]-1]
-for each in sel:
-    each.move(move)]]></script>
-  </tool>
-
   <tool name="import_all_abc" label="Import All ABC" icon="PLASMA_App">
     <script scriptType="python"><![CDATA[from toolbar import import_all_abc
 import_all_abc.main()]]></script>
-  </tool>
-
-  <tool name="auto_path_up_version" label="Version Up" icon="PLASMA_App">
-    <script scriptType="python"><![CDATA[from toolbar import auto_path_up_version
-auto_path_up_version.main()]]></script>
-  </tool>
-
-  <tool name="auto_path_down_version" label="Version Down" icon="PLASMA_App">
-    <script scriptType="python"><![CDATA[from toolbar import auto_path_down_version
-auto_path_down_version.main()]]></script>
   </tool>
 
   <tool name="openpath1" label="Open Path" icon="SOP_file">
@@ -324,17 +82,12 @@ openpath.main()]]></script>
 
   <tool name="setupCache" label="Setup Cache" icon="SOP_file">
     <script scriptType="python"><![CDATA[from toolbar import setupCache
-setupCache.main()]]></script>
+setupCache.main(kwargs)]]></script>
   </tool>
 
   <tool name="colorize" label="Colorize" icon="SOP_color">
     <script scriptType="python"><![CDATA[from toolbar import colorize
 colorize.main()]]></script>
-  </tool>
-
-  <tool name="parallelCache" label="Parallel Cache" icon="SOP_file">
-    <script scriptType="python"><![CDATA[from toolbar import parallelCache
-parallelCache.main()]]></script>
   </tool>
 
   <tool name="jigsaw_camera" label="Jigsaw Camera" icon="OBJ_camera">
