@@ -3,7 +3,14 @@
 # import os
 # import sys
 # import hou
-
+import getpass
+# 输出欢迎信息
+username = getpass.getuser()
+print '--------------------\n'
+print 'Hello {}\n'.format(username)
+print 'If you have any questions or suggestions in use, please contact me.\n'
+print 'Phone/WeChat: 17600206476\n'
+print '--------------------\n'
 #添加root_path
 # try:
 #     root_path = os.environ['ROOT_PATH']
