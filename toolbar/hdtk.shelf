@@ -6,6 +6,7 @@
  a single file. -->
 
   <toolshelf name="hdtk" label="HDTK">
+    <memberTool name="version_range"/>
     <memberTool name="fit_cam"/>
     <memberTool name="buildropnet"/>
     <memberTool name="createnull"/>
