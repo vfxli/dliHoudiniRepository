@@ -137,4 +137,26 @@ else:
     print( "The SubmitHoudiniToDeadline.py script could not be found in the Deadline Repository. Please make sure that the Deadline Client has been installed on this machine, that the Deadline Client bin folder is set in the DEADLINE_PATH environment variable, and that the Deadline Client has been configured to point to a valid Repository." )
 ]]></script>
   </tool>
+
+  <tool name="version_range" label="Version Range" icon="SOP_filecache">
+    <script scriptType="python"><![CDATA[nodes = hou.selectedNodes()
+for node in nodes:
+    if node.type().name() == 'filecache':
+        path = node.parm('file')
+        path.set(r"$HIP/cache/v`padzero(4, ch('version'))`/`opname('.')`/`opname('.')`_v`padzero(4, ch('version'))`.$F4.bgeo.sc")
+        
+        parm_group = node.parmTemplateGroup()
+        version = hou.IntParmTemplate(name = 'version',
+                                      label = 'Version',
+                                      num_components = 1,
+                                      default_value = [1],
+                                      min = 1,
+                                      max = 20)
+        parm_group.insertAfter('filemode', version)
+        node.setParmTemplateGroup(parm_group)
+        loadfromdisk = node.parm('loadfromdisk')
+        loadfromdisk.set(1)
+        initsim = node.parm('initsim')
+        initsim.set(1)]]></script>
+  </tool>
 </shelfDocument>
