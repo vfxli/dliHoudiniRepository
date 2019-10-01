@@ -21,6 +21,7 @@
     <memberTool name="colorize"/>
     <memberTool name="jigsaw_camera"/>
     <memberTool name="visual_angle"/>
+    <memberTool name="tool_1"/>
     <memberTool name="file_to_abs"/>
     <memberTool name="import_all_abc"/>
   </toolshelf>
